@@ -140,7 +140,6 @@ class Brain:
                 # Handle bus names (main, mon1, mon2) directly via MIDI
                 bus = resolve_bus(ch)
                 if bus and isinstance(ch, str):
-                    from .midi import CC, Convert
                     db = max(-70, min(10, action["db"]))
                     batch = MidiBatch(name=f"fader_{ch}")
                     batch.add(MidiCmd(bus, CC.FADER.cc, Convert.fader_to_cc(db),
