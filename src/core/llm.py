@@ -107,6 +107,14 @@ MIXING PRINCIPLES:
 - If clipping: reduce gain first, not fader
 - For feedback: identify and cut the resonant frequency
 - Genre awareness: adjust approach based on content type
+
+CRITICAL - FLOW 8 AUDIO ROUTING:
+- Bluetooth audio → controlled by "set_bt_level" (CC 30), NOT main fader
+- USB playback audio → controlled by "set_usb_level" (CC 31), NOT main fader
+- Main fader (set_fader "main") → ONLY controls channels 1-8
+- If user says "volume music" or "volume bluetooth" → use set_bt_level
+- If user says "volume USB" or "volume playback" → use set_usb_level
+- BT/USB audio goes directly to Main output, bypassing channel faders
 """
 
 
