@@ -301,11 +301,15 @@ class MidiDriver:
         self._log.append(cmd)
 
         if self.dry_run:
+            print(f"  [DRY RUN] {cmd}")
             return True
 
         try:
             msg = cmd.to_msg()
             self.port.send(msg)
+            # DEBUG: show raw MIDI bytes
+            print(f"  → Sent: {cmd}")
+            print(f"    Raw: ch={msg.channel} type={msg.type} cc={msg.control} val={msg.value}")
             for cb in self._callbacks:
                 cb(cmd)
             return True
