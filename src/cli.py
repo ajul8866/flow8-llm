@@ -98,7 +98,54 @@ def print_help():
 def interactive_mode(brain: Brain):
     """Run interactive command loop."""
     print_status(brain)
-    print(f"{C.DIM}Type 'help' for available commands. 'quit' to exit.{C.RESET}\n")
+    print(f"{C.DIM}Type 'help' for commands, '/' to list all commands, 'quit' to exit.{C.RESET}\n")
+
+    ALL_COMMANDS = [
+        # (category, command, description)
+        ("MIX", "set channel <N> gain <dB>", "Set preamp gain (-20 to +60)"),
+        ("MIX", "set channel <N> fader <dB>", "Set fader level (-70 to +10)"),
+        ("MIX", "set channel <N> eq <band> <dB>", "Set EQ (low/lowmid/highmid/high)"),
+        ("MIX", "set channel <N> pan <val>", "Set pan (-1.0 L to +1.0 R)"),
+        ("MIX", "set channel <N> lowcut <Hz>", "Set high-pass filter"),
+        ("MIX", "mute channel <N>", "Mute channel"),
+        ("MIX", "unmute channel <N>", "Unmute channel"),
+        ("MIX", "solo channel <N>", "Solo (PFL)"),
+        ("MIX", "reset channel <N>", "Reset channel to defaults"),
+        ("PRESET", "apply preset <name> to <N>", "Apply preset to channel"),
+        ("PRESET", "list presets", "Show available presets"),
+        ("SNAP", "save snapshot <name>", "Save current state"),
+        ("SNAP", "recall snapshot <name>", "Restore saved state"),
+        ("SNAP", "list snapshots", "Show saved snapshots"),
+        ("AUDIO", "start audio", "Auto-detect Flow 8 and start capture"),
+        ("AUDIO", "start audio <id>", "Start capture on device ID"),
+        ("AUDIO", "stop audio", "Stop audio capture"),
+        ("AUDIO", "list devices", "Show audio input devices"),
+        ("AUDIO", "analyze", "Show audio analysis per channel"),
+        ("AI", "explain", "LLM explains current mix"),
+        ("AI", "automix", "Start auto-mix mode (LLM controls)"),
+        ("AI", "stop automix", "Stop auto-mix mode"),
+        ("AI", "<natural language>", "Any mixing command in plain text"),
+        ("QUICK", "gain staging", "Auto-set all gains for headroom"),
+        ("QUICK", "fix feedback", "Detect and fix feedback"),
+        ("SYS", "status", "Show system status"),
+        ("SYS", "undo", "Undo last action"),
+        ("SYS", "help", "Show help"),
+        ("SYS", "quit", "Exit"),
+    ]
+
+    def show_command_menu():
+        """Show numbered command menu."""
+        print(f"\n{C.BOLD}── All Commands ──────────────────────────────────────────────{C.RESET}")
+        current_cat = ""
+        num = 1
+        for cat, cmd, desc in ALL_COMMANDS:
+            if cat != current_cat:
+                current_cat = cat
+                print(f"\n  {C.CYAN}{C.BOLD}[{cat}]{C.RESET}")
+            print(f"  {C.GREEN}{num:>3}{C.RESET}. {cmd:<35} {C.DIM}{desc}{C.RESET}")
+            num += 1
+        print(f"\n  {C.DIM}Type number to run, or type command directly{C.RESET}")
+        print(f"  {C.DIM}Example: 1 → set channel 1 gain 30dB{C.RESET}\n")
 
     while True:
         try:
@@ -109,6 +156,48 @@ def interactive_mode(brain: Brain):
 
         if not user_input:
             continue
+
+        # Handle / prefix - show menu or execute /command
+        if user_input == "/":
+            show_command_menu()
+            continue
+
+        if user_input.startswith("/"):
+            # /command → strip / and execute as normal
+            user_input = user_input[1:].strip()
+
+        # Handle numbered selection from menu
+        if user_input.isdigit():
+            idx = int(user_input) - 1
+            if 0 <= idx < len(ALL_COMMANDS):
+                _, cmd_template, desc = ALL_COMMANDS[idx]
+                # If template has <>, prompt user for values
+                if "<" in cmd_template:
+                    print(f"  {C.YELLOW}Template: {cmd_template}{C.RESET}")
+                    fill = input(f"  Fill in: ").strip()
+                    if fill:
+                        # Replace template placeholders with user input
+                        parts_template = cmd_template.split()
+                        parts_fill = fill.split()
+                        result_parts = []
+                        fill_idx = 0
+                        for p in parts_template:
+                            if p.startswith("<") and p.endswith(">"):
+                                if fill_idx < len(parts_fill):
+                                    result_parts.append(parts_fill[fill_idx])
+                                    fill_idx += 1
+                            else:
+                                result_parts.append(p)
+                        user_input = " ".join(result_parts)
+                    else:
+                        print("  Cancelled.")
+                        continue
+                else:
+                    user_input = cmd_template
+                print(f"  {C.DIM}→ {user_input}{C.RESET}")
+            else:
+                print(f"  {C.RED}Invalid number. '/' to see menu.{C.RESET}")
+                continue
 
         cmd = user_input.lower()
 
