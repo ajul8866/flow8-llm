@@ -255,7 +255,68 @@ def interactive_mode(brain: Brain):
                 else:
                     print("  No analysis data yet")
             else:
-                print("  Audio capture not running")
+                print("  Audio capture not running. Use 'start audio' first.")
+            continue
+
+        elif cmd == "start audio":
+            try:
+                import sounddevice
+                # List input devices
+                devices = brain.audio.list_devices()
+                print(f"  Available input devices:")
+                for d in devices:
+                    print(f"    [{d['id']}] {d['name']} ({d['inputs']}ch)")
+
+                # Try to find Flow 8
+                flow_device = None
+                for d in devices:
+                    if "flow" in d["name"].lower() or "behringer" in d["name"].lower():
+                        flow_device = d["id"]
+                        break
+
+                if flow_device is not None:
+                    print(f"\n  Auto-selected device: [{flow_device}]")
+                    brain.audio = AudioEngine(device_name=str(flow_device), channels=8)
+                    brain.audio.start_capture()
+                    print(f"  {C.GREEN}Audio capture started!{C.RESET}")
+                else:
+                    print(f"\n  {C.YELLOW}Flow 8 not found in audio devices.{C.RESET}")
+                    print(f"  Use: start audio <device_id>")
+            except ImportError:
+                print(f"  {C.RED}sounddevice not installed.{C.RESET}")
+                print(f"  Run: pip install sounddevice")
+            except Exception as e:
+                print(f"  {C.RED}Error: {e}{C.RESET}")
+            continue
+
+        elif cmd.startswith("start audio "):
+            try:
+                device_id = int(cmd.split()[-1])
+                import sounddevice
+                brain.audio = AudioEngine(device_name=str(device_id), channels=8)
+                brain.audio.start_capture()
+                print(f"  {C.GREEN}Audio capture started on device {device_id}!{C.RESET}")
+            except Exception as e:
+                print(f"  {C.RED}Error: {e}{C.RESET}")
+            continue
+
+        elif cmd == "stop audio":
+            if brain.audio.is_running:
+                brain.audio.stop_capture()
+                print(f"  Audio capture stopped.")
+            else:
+                print("  Audio not running.")
+            continue
+
+        elif cmd == "list devices":
+            try:
+                import sounddevice
+                devices = brain.audio.list_devices()
+                print(f"  Input devices:")
+                for d in devices:
+                    print(f"    [{d['id']}] {d['name']} ({d['inputs']}ch)")
+            except ImportError:
+                print(f"  {C.RED}sounddevice not installed. Run: pip install sounddevice{C.RESET}")
             continue
 
         # Natural language command → LLM
