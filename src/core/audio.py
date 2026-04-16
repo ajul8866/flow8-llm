@@ -78,15 +78,15 @@ class ChannelAnalysis:
 
     def to_dict(self) -> dict:
         return {
-            "channel": self.channel,
-            "rms_db": round(self.rms_db, 1),
-            "peak_db": round(self.peak_db, 1),
-            "lufs": round(self.lufs, 1),
-            "headroom_db": round(self.headroom_db, 1),
+            "channel": int(self.channel),
+            "rms_db": round(float(self.rms_db), 1),
+            "peak_db": round(float(self.peak_db), 1),
+            "lufs": round(float(self.lufs), 1),
+            "headroom_db": round(float(self.headroom_db), 1),
             "dominant_band": self.dominant_band,
-            "clipping": self.clipping,
-            "has_signal": self.has_signal,
-            "bands": {k: round(v, 1) for k, v in self.band_energies.items()},
+            "clipping": bool(self.clipping),
+            "has_signal": bool(self.has_signal),
+            "bands": {k: round(float(v), 1) for k, v in self.band_energies.items()},
         }
 
 
