@@ -552,6 +552,9 @@ class StateManager:
 
     def set_fader(self, channel: int, db: float) -> MidiBatch:
         """Set fader level."""
+        if isinstance(channel, str):
+            try: channel = int(channel)
+            except ValueError: return MidiBatch()
         ch = self.state.get_channel(channel)
         if not ch:
             return MidiBatch()
@@ -569,6 +572,9 @@ class StateManager:
 
     def set_gain(self, channel: int, db: float) -> MidiBatch:
         """Set preamp gain."""
+        if isinstance(channel, str):
+            try: channel = int(channel)
+            except ValueError: return MidiBatch()
         ch = self.state.get_channel(channel)
         if not ch:
             return MidiBatch()
@@ -586,6 +592,9 @@ class StateManager:
 
     def set_eq(self, channel: int, band: str, db: float) -> MidiBatch:
         """Set EQ band."""
+        if isinstance(channel, str):
+            try: channel = int(channel)
+            except ValueError: return MidiBatch()
         ch = self.state.get_channel(channel)
         if not ch:
             return MidiBatch()

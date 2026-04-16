@@ -125,6 +125,12 @@ class Brain:
         def resolve_bus(channel) -> MidiBus | None:
             """Resolve channel to MidiBus."""
             if isinstance(channel, str):
+                # Try numeric string first
+                try:
+                    channel = int(channel)
+                except ValueError:
+                    pass
+            if isinstance(channel, str):
                 return {
                     "main": MidiBus.MAIN, "master": MidiBus.MAIN,
                     "mon1": MidiBus.MON1, "monitor1": MidiBus.MON1,
