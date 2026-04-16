@@ -315,7 +315,7 @@ class AudioEngine:
 
     def __init__(
         self,
-        device_name: Optional[str] = None,
+        device: Optional[int | str] = None,
         sample_rate: int = 48000,
         channels: int = 8,
         buffer_size: int = 1024,
@@ -323,7 +323,7 @@ class AudioEngine:
         self.sample_rate = sample_rate
         self.channels = channels
         self.buffer_size = buffer_size
-        self.device_name = device_name
+        self.device = device  # int = device index, str = device name pattern
 
         # Analysis components
         self.spectrum = SpectrumAnalyzer(sample_rate)
@@ -455,7 +455,7 @@ class AudioEngine:
                 cb(result)
 
         self._stream = sd.InputStream(
-            device=self.device_name,
+            device=self.device,
             channels=self.channels,
             samplerate=self.sample_rate,
             blocksize=self.buffer_size,

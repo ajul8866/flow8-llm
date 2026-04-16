@@ -358,14 +358,16 @@ def interactive_mode(brain: Brain):
 
                 # Try to find Flow 8
                 flow_device = None
+                flow_channels = 2
                 for d in devices:
                     if "flow" in d["name"].lower() or "behringer" in d["name"].lower():
                         flow_device = d["id"]
+                        flow_channels = d["inputs"]
                         break
 
                 if flow_device is not None:
-                    print(f"\n  Auto-selected device: [{flow_device}]")
-                    brain.audio = AudioEngine(device_name=str(flow_device), channels=8)
+                    print(f"\n  Auto-selected device: [{flow_device}] ({flow_channels}ch)")
+                    brain.audio = AudioEngine(device=flow_device, channels=flow_channels)
                     brain.audio.start_capture()
                     print(f"  {C.GREEN}Audio capture started!{C.RESET}")
                 else:
@@ -382,9 +384,16 @@ def interactive_mode(brain: Brain):
             try:
                 device_id = int(cmd.split()[-1])
                 import sounddevice
-                brain.audio = AudioEngine(device_name=str(device_id), channels=8)
+                # Find channel count for this device
+                devices = brain.audio.list_devices()
+                channels = 2
+                for d in devices:
+                    if d["id"] == device_id:
+                        channels = d["inputs"]
+                        break
+                brain.audio = AudioEngine(device=device_id, channels=channels)
                 brain.audio.start_capture()
-                print(f"  {C.GREEN}Audio capture started on device {device_id}!{C.RESET}")
+                print(f"  {C.GREEN}Audio capture started on device {device_id} ({channels}ch)!{C.RESET}")
             except Exception as e:
                 print(f"  {C.RED}Error: {e}{C.RESET}")
             continue
