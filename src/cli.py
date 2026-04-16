@@ -97,7 +97,6 @@ def print_help():
 
 def interactive_mode(brain: Brain):
     """Run interactive command loop."""
-    print_banner()
     print_status(brain)
     print(f"{C.DIM}Type 'help' for available commands. 'quit' to exit.{C.RESET}\n")
 
@@ -397,8 +396,8 @@ def main():
             print(f"  {C.RED}✗ {result.error or 'Failed'}{C.RESET}")
         return
 
-    # Default: interactive mode
-    interactive_mode(brain)
+    if not args.command and not args.status and not args.dashboard and not args.automix and not args.scene:
+        interactive_mode(brain)
 
 
 if __name__ == "__main__":
