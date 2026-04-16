@@ -119,9 +119,34 @@ class Brain:
         act = action.get("action", "").lower()
         batch = MidiBatch()
 
+        # Resolve channel: int (1-8) or str ("main", "mon1", "mon2", "fx1", "fx2")
+        ch = action.get("channel")
+
+        def resolve_bus(channel) -> MidiBus | None:
+            """Resolve channel to MidiBus."""
+            if isinstance(channel, str):
+                return {
+                    "main": MidiBus.MAIN, "master": MidiBus.MAIN,
+                    "mon1": MidiBus.MON1, "monitor1": MidiBus.MON1,
+                    "mon2": MidiBus.MON2, "monitor2": MidiBus.MON2,
+                    "fx1": MidiBus.FX1, "fx2": MidiBus.FX2,
+                }.get(channel.lower())
+            elif isinstance(channel, int) and 1 <= channel <= 8:
+                return MidiBus(channel - 1)
+            return None
+
         try:
             if act == "set_fader":
-                batch = self.state.set_fader(action["channel"], action["db"])
+                # Handle bus names (main, mon1, mon2) directly via MIDI
+                bus = resolve_bus(ch)
+                if bus and isinstance(ch, str):
+                    from .midi import CC, Convert
+                    db = max(-70, min(10, action["db"]))
+                    batch = MidiBatch(name=f"fader_{ch}")
+                    batch.add(MidiCmd(bus, CC.FADER.cc, Convert.fader_to_cc(db),
+                              f"{ch} fader {db:+.0f}dB"))
+                else:
+                    batch = self.state.set_fader(action["channel"], action["db"])
 
             elif act == "set_gain":
                 batch = self.state.set_gain(action["channel"], action["db"])
@@ -182,20 +207,30 @@ class Brain:
                     batch.add(MidiCmd(midi_bus, CC.PAN.cc, Convert.pan_to_cc(ch.pan)))
 
             elif act == "mute":
-                ch = self.state.state.get_channel(action["channel"])
-                if ch:
-                    ch.muted = True
-                    midi_bus = MidiBus(action["channel"] - 1)
-                    batch = MidiBatch(name=f"mute_ch{action['channel']}")
-                    batch.add(MidiCmd(midi_bus, CC.MUTE.cc, 127))
+                bus = resolve_bus(ch)
+                if bus and isinstance(ch, str):
+                    batch = MidiBatch(name=f"mute_{ch}")
+                    batch.add(MidiCmd(bus, CC.MUTE.cc, 127, f"{ch} MUTED"))
+                else:
+                    ch_state = self.state.state.get_channel(action["channel"])
+                    if ch_state:
+                        ch_state.muted = True
+                        midi_bus = MidiBus(action["channel"] - 1)
+                        batch = MidiBatch(name=f"mute_ch{action['channel']}")
+                        batch.add(MidiCmd(midi_bus, CC.MUTE.cc, 127))
 
             elif act == "unmute":
-                ch = self.state.state.get_channel(action["channel"])
-                if ch:
-                    ch.muted = False
-                    midi_bus = MidiBus(action["channel"] - 1)
-                    batch = MidiBatch(name=f"unmute_ch{action['channel']}")
-                    batch.add(MidiCmd(midi_bus, CC.MUTE.cc, 0))
+                bus = resolve_bus(ch)
+                if bus and isinstance(ch, str):
+                    batch = MidiBatch(name=f"unmute_{ch}")
+                    batch.add(MidiCmd(bus, CC.MUTE.cc, 0, f"{ch} UNMUTED"))
+                else:
+                    ch_state = self.state.state.get_channel(action["channel"])
+                    if ch_state:
+                        ch_state.muted = False
+                        midi_bus = MidiBus(action["channel"] - 1)
+                        batch = MidiBatch(name=f"unmute_ch{action['channel']}")
+                        batch.add(MidiCmd(midi_bus, CC.MUTE.cc, 0))
 
             elif act == "solo":
                 ch = self.state.state.get_channel(action["channel"])
