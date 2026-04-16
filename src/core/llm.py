@@ -66,12 +66,18 @@ AVAILABLE ACTIONS (JSON format):
 15. {"action": "set_fx_time", "fx": <1|2>, "ms": <1-3000>}
 16. {"action": "set_fx_feedback", "fx": <1|2>, "percent": <0-100>}
 17. {"action": "set_fx_mix", "fx": <1|2>, "percent": <0-100>}
-18. {"action": "set_limiter", "bus": <"main"|"mon1"|"mon2">, "db": <-30 to 0>}
-19. {"action": "save_snapshot", "name": "<snapshot_name>"}
-20. {"action": "recall_snapshot", "name": "<snapshot_name>"}
-21. {"action": "apply_preset", "preset": "<preset_name>", "channel": <1-8>}
-22. {"action": "reset_channel", "channel": <1-8>}
-23. {"action": "explain", "text": "<your reasoning>"}
+18. {"action": "set_fx_mute", "fx": <1|2>, "mute": <true|false>}
+19. {"action": "set_limiter", "bus": <"main"|"mon1"|"mon2">, "db": <-30 to 0>}
+20. {"action": "set_mon_send", "channel": <1-8>, "mon": <1|2>, "db": <-70 to +10>}
+21. {"action": "phantom_48v", "channel": <1|2>, "enabled": <true|false>}
+22. {"action": "mute_all", "mute": <true|false>}
+23. {"action": "set_bt_level", "db": <-70 to +10>}
+24. {"action": "set_usb_level", "db": <-70 to +10>}
+25. {"action": "save_snapshot", "name": "<snapshot_name>"}
+26. {"action": "recall_snapshot", "name": "<snapshot_name>"}
+27. {"action": "apply_preset", "preset": "<preset_name>", "channel": <1-8>}
+28. {"action": "reset_channel", "channel": <1-8>}
+29. {"action": "explain", "text": "<your reasoning>"}
 
 RESPONSE FORMAT:
 Always respond with a JSON object:

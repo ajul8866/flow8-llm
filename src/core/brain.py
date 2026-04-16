@@ -330,6 +330,76 @@ class Brain:
                     ch.reset()
                     batch = self.state.state.to_commands()
 
+            elif act == "phantom_48v":
+                channel = action["channel"]
+                enabled = action["enabled"]
+                if channel in (1, 2):
+                    midi_bus = MidiBus(channel - 1)
+                    batch = MidiBatch(name=f"phantom_ch{channel}")
+                    batch.add(MidiCmd(midi_bus, CC.PHANTOM_48V.cc,
+                              127 if enabled else 0,
+                              f"Ch{channel} 48V {'ON' if enabled else 'OFF'}"))
+
+            elif act == "mute_all":
+                mute = action.get("mute", True)
+                batch = MidiBatch(name="mute_all")
+                for ch_num in range(1, 9):
+                    midi_bus = MidiBus(ch_num - 1)
+                    batch.add(MidiCmd(midi_bus, CC.MUTE.cc,
+                              127 if mute else 0,
+                              f"ALL {'MUTED' if mute else 'UNMUTED'}"))
+
+            elif act == "set_fx_mute":
+                fx = action["fx"]
+                mute = action.get("mute", True)
+                midi_bus = MidiBus.FX1 if fx == 1 else MidiBus.FX2
+                batch = MidiBatch(name=f"fx{fx}_mute")
+                # Use Mute CC on FX bus
+                batch.add(MidiCmd(midi_bus, CC.MUTE.cc,
+                          127 if mute else 0,
+                          f"FX{fx} {'MUTED' if mute else 'UNMUTED'}"))
+
+            elif act == "set_mon_send":
+                ch_state = self.state.state.get_channel(action["channel"])
+                if ch_state:
+                    mon = action.get("mon", 1)
+                    db = action["db"]
+                    if mon == 1:
+                        ch_state.mon1_send_db = db
+                        cc_def = CC.MON1_SEND
+                    else:
+                        ch_state.mon2_send_db = db
+                        cc_def = CC.MON2_SEND
+                    midi_bus = MidiBus(action["channel"] - 1)
+                    batch = MidiBatch(name=f"mon{mon}_send_ch{action['channel']}")
+                    batch.add(MidiCmd(midi_bus, cc_def.cc, Convert.fader_to_cc(db),
+                              f"Ch{action['channel']} Mon{mon} {db:+.0f}dB"))
+
+            elif act == "set_bt_level":
+                db = action["db"]
+                batch = MidiBatch(name="bt_level")
+                batch.add(MidiCmd(MidiBus.USB_BT, CC.BT_LEVEL.cc,
+                          Convert.fader_to_cc(db),
+                          f"BT level {db:+.0f}dB"))
+
+            elif act == "set_usb_level":
+                db = action["db"]
+                batch = MidiBatch(name="usb_level")
+                batch.add(MidiCmd(MidiBus.USB_BT, CC.USB_LEVEL.cc,
+                          Convert.fader_to_cc(db),
+                          f"USB level {db:+.0f}dB"))
+
+            elif act == "set_limiter":
+                bus = self.state.state.get_bus(action["bus"])
+                if bus:
+                    bus.limiter_db = action["db"]
+                    midi_bus = {"main": MidiBus.MAIN, "mon1": MidiBus.MON1,
+                               "mon2": MidiBus.MON2}.get(action["bus"])
+                    if midi_bus:
+                        batch = MidiBatch(name=f"limiter_{action['bus']}")
+                        batch.add(MidiCmd(midi_bus, CC.BUS_LIMITER.cc,
+                                  Convert.limiter_to_cc(action["db"])))
+
             elif act == "explain":
                 return True, MidiBatch(name="explain")  # No MIDI needed
 
